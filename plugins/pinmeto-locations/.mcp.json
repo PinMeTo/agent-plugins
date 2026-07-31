@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "pinmeto": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/server/index.mjs"],
+      "env": {
+        "PINMETO_ACCOUNT_ID": "${user_config.PINMETO_ACCOUNT_ID}",
+        "PINMETO_APP_ID": "${user_config.PINMETO_APP_ID}",
+        "PINMETO_APP_SECRET": "${user_config.PINMETO_APP_SECRET}"
+      }
+    }
+  }
+}

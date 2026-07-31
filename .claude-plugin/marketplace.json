@@ -1,0 +1,27 @@
+{
+  "name": "pinmeto",
+  "owner": {
+    "name": "PinMeTo",
+    "email": "dev@pinmeto.com",
+    "url": "https://www.pinmeto.com/"
+  },
+  "metadata": {
+    "description": "Official PinMeTo plugins for Claude",
+    "version": "1.0.0",
+    "pluginRoot": "./plugins"
+  },
+  "plugins": [
+    {
+      "name": "pinmeto-locations",
+      "source": "./plugins/pinmeto-locations",
+      "description": "PinMeTo location data and analytics reports for Google, Facebook and Apple.",
+      "version": "4.1.0",
+      "author": { "name": "PinMeTo", "email": "dev@pinmeto.com" },
+      "category": "integration",
+      "tags": ["location", "analytics", "reporting", "google", "facebook", "apple"],
+      "license": "MIT",
+      "homepage": "https://www.pinmeto.com/",
+      "repository": "https://github.com/PinMeTo/claude-plugins.git"
+    }
+  ]
+}

@@ -1,0 +1,228 @@
+{
+  "companyName": "PinMeTo",
+  "title": "Location Analytics Report",
+  "period": "2024",
+  "priorPeriod": "2023",
+  "dateRange": "January 1 - December 31, 2024",
+  "priorDateRange": "January 1 - December 31, 2023",
+  "highlights": [
+    "Average Google rating: 5 stars across all locations",
+    "Received 1 reviews during the period"
+  ],
+  "kpis": [
+    {
+      "name": "Google Views",
+      "value": "0",
+      "change": "N/A"
+    },
+    {
+      "name": "FB Reach",
+      "value": "0",
+      "change": "N/A"
+    },
+    {
+      "name": "Avg Rating",
+      "value": "5.0",
+      "change": "+0.0"
+    },
+    {
+      "name": "Reviews",
+      "value": "1",
+      "change": "N/A"
+    }
+  ],
+  "google": {
+    "metrics": [
+      {
+        "name": "Profile Views",
+        "value": 0,
+        "periodChange": "N/A",
+        "yearChange": "N/A"
+      },
+      {
+        "name": "Search Impressions",
+        "value": 0,
+        "periodChange": "N/A",
+        "yearChange": "N/A"
+      },
+      {
+        "name": "Website Clicks",
+        "value": 0,
+        "periodChange": "N/A",
+        "yearChange": "N/A"
+      },
+      {
+        "name": "Direction Requests",
+        "value": 0,
+        "periodChange": "N/A",
+        "yearChange": "N/A"
+      },
+      {
+        "name": "Phone Calls",
+        "value": 0,
+        "periodChange": "N/A",
+        "yearChange": "N/A"
+      }
+    ],
+    "chartData": [
+      {
+        "label": "Jan",
+        "value": 0,
+        "priorValue": 0
+      },
+      {
+        "label": "Feb",
+        "value": 0,
+        "priorValue": 0
+      },
+      {
+        "label": "Mar",
+        "value": 0,
+        "priorValue": 0
+      },
+      {
+        "label": "Apr",
+        "value": 0,
+        "priorValue": 0
+      },
+      {
+        "label": "May",
+        "value": 0,
+        "priorValue": 0
+      },
+      {
+        "label": "Jun",
+        "value": 0,
+        "priorValue": 0
+      },
+      {
+        "label": "Jul",
+        "value": 0,
+        "priorValue": 0
+      },
+      {
+        "label": "Aug",
+        "value": 0,
+        "priorValue": 0
+      },
+      {
+        "label": "Sep",
+        "value": 0,
+        "priorValue": 0
+      },
+      {
+        "label": "Oct",
+        "value": 0,
+        "priorValue": 0
+      },
+      {
+        "label": "Nov",
+        "value": 0,
+        "priorValue": 0
+      },
+      {
+        "label": "Dec",
+        "value": 0,
+        "priorValue": 0
+      }
+    ]
+  },
+  "facebook": {
+    "metrics": [
+      {
+        "name": "Page Views",
+        "value": 0,
+        "periodChange": "N/A",
+        "yearChange": "N/A"
+      },
+      {
+        "name": "Reach",
+        "value": 0,
+        "periodChange": "N/A",
+        "yearChange": "N/A"
+      },
+      {
+        "name": "Engagement",
+        "value": 0,
+        "periodChange": "N/A",
+        "yearChange": "N/A"
+      },
+      {
+        "name": "Post Clicks",
+        "value": 0,
+        "periodChange": "N/A",
+        "yearChange": "N/A"
+      }
+    ],
+    "chartData": []
+  },
+  "apple": {
+    "metrics": [
+      {
+        "name": "Discovery Views",
+        "value": 0,
+        "periodChange": "N/A",
+        "yearChange": "N/A"
+      },
+      {
+        "name": "Direction Requests",
+        "value": 0,
+        "periodChange": "N/A",
+        "yearChange": "N/A"
+      },
+      {
+        "name": "Website Clicks",
+        "value": 0,
+        "periodChange": "N/A",
+        "yearChange": "N/A"
+      }
+    ],
+    "chartData": []
+  },
+  "keywords": {
+    "topKeywords": [],
+    "categoryDistribution": [
+      {
+        "label": "Branded",
+        "value": 0
+      },
+      {
+        "label": "Discovery",
+        "value": 0
+      },
+      {
+        "label": "Navigational",
+        "value": 0
+      }
+    ]
+  },
+  "reviews": {
+    "totalReviews": 1,
+    "averageRating": 5,
+    "ratingChange": "+0.0",
+    "sentiment": {
+      "positive": 100,
+      "neutral": 0,
+      "negative": 0
+    },
+    "topThemes": [],
+    "recentHighlights": []
+  },
+  "recommendations": [
+    {
+      "title": "Optimize Google Business Profiles",
+      "description": "Review and update location descriptions with high-performing keywords to improve discovery visibility.",
+      "impact": "Projected increase in search impressions"
+    },
+    {
+      "title": "Respond to Reviews",
+      "description": "Maintain high response rates to customer reviews to improve engagement and customer satisfaction.",
+      "impact": "Improved customer trust and loyalty"
+    },
+    {
+      "title": "Monitor Competitor Activity",
+      "description": "Track competitor presence on local platforms to identify opportunities for differentiation.",
+      "impact": "Better market positioning"
+    }
+  ]
+}

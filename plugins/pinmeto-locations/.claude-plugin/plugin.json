@@ -1,0 +1,31 @@
+{
+  "name": "pinmeto-locations",
+  "version": "4.1.0",
+  "description": "PinMeTo location data and analytics reports for Google, Facebook and Apple.",
+  "author": { "name": "PinMeTo", "url": "https://www.pinmeto.com/" },
+  "homepage": "https://www.pinmeto.com/",
+  "repository": "https://github.com/PinMeTo/claude-plugins",
+  "license": "MIT",
+  "keywords": ["location", "analytics", "reporting", "google", "facebook", "apple"],
+  "userConfig": {
+    "PINMETO_ACCOUNT_ID": {
+      "type": "string",
+      "title": "PinMeTo Account ID",
+      "description": "Found in Account Settings -> API (example: pinmeto)",
+      "required": true
+    },
+    "PINMETO_APP_ID": {
+      "type": "string",
+      "title": "PinMeTo App ID",
+      "description": "Found in Account Settings -> API",
+      "required": true
+    },
+    "PINMETO_APP_SECRET": {
+      "type": "string",
+      "title": "PinMeTo App Secret",
+      "description": "Found in Account Settings -> API",
+      "required": true,
+      "sensitive": true
+    }
+  }
+}
