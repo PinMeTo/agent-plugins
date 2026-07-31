@@ -1,0 +1,142 @@
+name: Sync plugin artifacts
+
+on:
+  repository_dispatch:
+    types: [server-released, skill-released]
+  workflow_dispatch:
+    inputs:
+      server_version:
+        description: MCP server version to vendor (blank keeps current)
+        required: false
+      skill_version:
+        description: Skill version to vendor (blank keeps current)
+        required: false
+
+# Exactly one writer. Two releases landing minutes apart queue rather than race.
+concurrency:
+  group: sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Resolve target versions
+        id: versions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Routed through env instead of interpolated directly into the script:
+          # client_payload.* comes from a repository_dispatch call and must never
+          # be substituted as raw text into a run: block (command injection).
+          SERVER_INPUT: ${{ github.event.client_payload.server_version || inputs.server_version }}
+          SKILL_INPUT: ${{ github.event.client_payload.skill_version || inputs.skill_version }}
+        run: |
+          CURRENT_SERVER=$(jq -r .server plugins/pinmeto-locations/components.json)
+          CURRENT_SKILL=$(jq -r .skill plugins/pinmeto-locations/components.json)
+          echo "server=${SERVER_INPUT:-$CURRENT_SERVER}" >> "$GITHUB_OUTPUT"
+          echo "skill=${SKILL_INPUT:-$CURRENT_SKILL}" >> "$GITHUB_OUTPUT"
+
+      - name: Vendor the server bundle
+        env:
+          GH_TOKEN: ${{ secrets.MARKETPLACE_SYNC_TOKEN }}
+        run: |
+          mkdir -p plugins/pinmeto-locations/server
+          gh release download "v${{ steps.versions.outputs.server }}" \
+            --repo PinMeTo/pinmeto-location-mcp \
+            --pattern index.mjs \
+            --output plugins/pinmeto-locations/server/index.mjs \
+            --clobber
+
+      - name: Vendor the skill
+        env:
+          GH_TOKEN: ${{ secrets.MARKETPLACE_SYNC_TOKEN }}
+        run: |
+          gh release download "v${{ steps.versions.outputs.skill }}" \
+            --repo PinMeTo/pinmeto-location-reports-skill \
+            --pattern '*.skill' \
+            --output /tmp/skill.zip \
+            --clobber
+          rm -rf plugins/pinmeto-locations/skills/pinmeto-location-reports
+          mkdir -p plugins/pinmeto-locations/skills/pinmeto-location-reports
+          unzip -q /tmp/skill.zip -d plugins/pinmeto-locations/skills/pinmeto-location-reports
+
+      - name: Reject oversized payloads
+        run: |
+          SIZE_KB=$(du -sk plugins/pinmeto-locations | cut -f1)
+          echo "Plugin payload: ${SIZE_KB} KB"
+          if [ "$SIZE_KB" -gt 5120 ]; then
+            echo "::error::Plugin payload ${SIZE_KB} KB exceeds the 5 MB budget."
+            du -ah plugins/pinmeto-locations | sort -rh | head -20
+            exit 1
+          fi
+          if find plugins/pinmeto-locations -name node_modules -type d | grep -q .; then
+            echo "::error::node_modules leaked into the plugin payload."
+            exit 1
+          fi
+
+      - name: Verify the bundled server starts and matches the skill's expectations
+        working-directory: plugins/pinmeto-locations
+        env:
+          PINMETO_ACCOUNT_ID: ci
+          PINMETO_APP_ID: ci
+          PINMETO_APP_SECRET: ci
+        run: |
+          printf '%s\n%s\n%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"ci","version":"0"}}}' \
+            '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
+            | node server/index.mjs 2>/dev/null > /tmp/tools.jsonl
+          node -e '
+            const fs = require("fs");
+            const lines = fs.readFileSync("/tmp/tools.jsonl", "utf-8").trim().split("\n").filter(Boolean);
+            const listed = lines.map(JSON.parse).find(m => m.id === 2);
+            if (!listed) throw new Error("Server produced no tools/list response");
+            const tools = listed.result.tools;
+            if (tools.length !== 12) throw new Error(`Expected 12 tools, got ${tools.length}`);
+            const untitled = tools.filter(t => !t.title).map(t => t.name);
+            if (untitled.length) throw new Error(`Tools missing a title: ${untitled.join(", ")}`);
+            console.log(`Server OK: ${tools.length} tools, all titled`);
+          '
+
+      - name: Tool-surface parity against the vendored server
+        working-directory: plugins/pinmeto-locations/skills/pinmeto-location-reports
+        run: |
+          if [ -f scripts/check_mcp_parity.js ]; then
+            # --server takes the server entry point; the script spawns it and runs
+            # tools/list. No credentials needed. Exit 1 = drift, 2 = unreachable.
+            node scripts/check_mcp_parity.js --server ../../server/index.mjs
+          else
+            echo "::warning::check_mcp_parity.js not present in this skill release; parity not verified."
+          fi
+
+      - name: Derive the plugin version
+        id: bump
+        run: |
+          NEXT=$(node scripts/bump-version.mjs \
+            --server "${{ steps.versions.outputs.server }}" \
+            --skill "${{ steps.versions.outputs.skill }}")
+          echo "next=$NEXT" >> "$GITHUB_OUTPUT"
+
+      - name: Validate the plugin
+        run: npx --yes @anthropic-ai/claude-code plugin validate ./plugins/pinmeto-locations --strict
+
+      - name: Commit
+        run: |
+          if [ "${{ steps.bump.outputs.next }}" = "no change" ]; then
+            echo "Component versions unchanged; nothing to commit."
+            exit 0
+          fi
+          git config user.name "pinmeto-bot"
+          git config user.email "dev@pinmeto.com"
+          git add -A
+          git diff --staged --quiet && echo "No file changes." && exit 0
+          git commit -m "chore: sync plugin ${{ steps.bump.outputs.next }} (server ${{ steps.versions.outputs.server }}, skill ${{ steps.versions.outputs.skill }})"
+          git push
