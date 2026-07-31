@@ -15,7 +15,7 @@
       "name": "pinmeto-locations",
       "source": "./plugins/pinmeto-locations",
       "description": "PinMeTo location data and analytics reports for Google, Facebook and Apple.",
-      "version": "4.1.0",
+      "version": "4.0.0",
       "author": { "name": "PinMeTo", "email": "dev@pinmeto.com" },
       "category": "integration",
       "tags": ["location", "analytics", "reporting", "google", "facebook", "apple"],
