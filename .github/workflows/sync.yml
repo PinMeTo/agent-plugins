@@ -32,7 +32,6 @@ jobs:
       - name: Resolve target versions
         id: versions
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Routed through env instead of interpolated directly into the script:
           # client_payload.* comes from a repository_dispatch call and must never
           # be substituted as raw text into a run: block (command injection).
@@ -41,15 +40,32 @@ jobs:
         run: |
           CURRENT_SERVER=$(jq -r .server plugins/pinmeto-locations/components.json)
           CURRENT_SKILL=$(jq -r .skill plugins/pinmeto-locations/components.json)
-          echo "server=${SERVER_INPUT:-$CURRENT_SERVER}" >> "$GITHUB_OUTPUT"
-          echo "skill=${SKILL_INPUT:-$CURRENT_SKILL}" >> "$GITHUB_OUTPUT"
+          SERVER="${SERVER_INPUT:-$CURRENT_SERVER}"
+          SKILL="${SKILL_INPUT:-$CURRENT_SKILL}"
+
+          # Fail closed before any downstream step gets a chance to re-embed this
+          # value as script text. A hostile or malformed payload dies here, before
+          # MARKETPLACE_SYNC_TOKEN or contents: write are ever in scope.
+          SEMVER_RE='^[0-9]+\.[0-9]+\.[0-9]+$'
+          if ! [[ "$SERVER" =~ $SEMVER_RE ]]; then
+            echo "::error::server version '$SERVER' is not a valid semver (expected X.Y.Z)."
+            exit 1
+          fi
+          if ! [[ "$SKILL" =~ $SEMVER_RE ]]; then
+            echo "::error::skill version '$SKILL' is not a valid semver (expected X.Y.Z)."
+            exit 1
+          fi
+
+          echo "server=$SERVER" >> "$GITHUB_OUTPUT"
+          echo "skill=$SKILL" >> "$GITHUB_OUTPUT"
 
       - name: Vendor the server bundle
         env:
           GH_TOKEN: ${{ secrets.MARKETPLACE_SYNC_TOKEN }}
+          SERVER_VERSION: ${{ steps.versions.outputs.server }}
         run: |
           mkdir -p plugins/pinmeto-locations/server
-          gh release download "v${{ steps.versions.outputs.server }}" \
+          gh release download "v$SERVER_VERSION" \
             --repo PinMeTo/pinmeto-location-mcp \
             --pattern index.mjs \
             --output plugins/pinmeto-locations/server/index.mjs \
@@ -58,8 +74,9 @@ jobs:
       - name: Vendor the skill
         env:
           GH_TOKEN: ${{ secrets.MARKETPLACE_SYNC_TOKEN }}
+          SKILL_VERSION: ${{ steps.versions.outputs.skill }}
         run: |
-          gh release download "v${{ steps.versions.outputs.skill }}" \
+          gh release download "v$SKILL_VERSION" \
             --repo PinMeTo/pinmeto-location-reports-skill \
             --pattern '*.skill' \
             --output /tmp/skill.zip \
@@ -119,24 +136,41 @@ jobs:
 
       - name: Derive the plugin version
         id: bump
+        env:
+          SERVER_VERSION: ${{ steps.versions.outputs.server }}
+          SKILL_VERSION: ${{ steps.versions.outputs.skill }}
         run: |
           NEXT=$(node scripts/bump-version.mjs \
-            --server "${{ steps.versions.outputs.server }}" \
-            --skill "${{ steps.versions.outputs.skill }}")
+            --server "$SERVER_VERSION" \
+            --skill "$SKILL_VERSION")
           echo "next=$NEXT" >> "$GITHUB_OUTPUT"
 
       - name: Validate the plugin
         run: npx --yes @anthropic-ai/claude-code plugin validate ./plugins/pinmeto-locations --strict
 
       - name: Commit
+        env:
+          NEXT_VERSION: ${{ steps.bump.outputs.next }}
+          SERVER_VERSION: ${{ steps.versions.outputs.server }}
+          SKILL_VERSION: ${{ steps.versions.outputs.skill }}
         run: |
-          if [ "${{ steps.bump.outputs.next }}" = "no change" ]; then
-            echo "Component versions unchanged; nothing to commit."
+          if [ "$NEXT_VERSION" = "no change" ]; then
+            # Versions didn't move, but the vendor steps may still have downloaded
+            # bytes that differ from what's committed (e.g. an asset re-uploaded
+            # under an existing tag). Don't silently discard that: warn if the
+            # tree is dirty, but still exit 0 - a plain re-run with identical
+            # versions downloads identical bytes and must stay a clean no-op.
+            if git status --porcelain | grep -q .; then
+              echo "::warning::Component versions unchanged but vendored files differ from what's committed. Not committing - investigate before the next release. Changed paths:"
+              git status --porcelain
+            else
+              echo "Component versions unchanged; nothing to commit."
+            fi
             exit 0
           fi
           git config user.name "pinmeto-bot"
           git config user.email "dev@pinmeto.com"
           git add -A
           git diff --staged --quiet && echo "No file changes." && exit 0
-          git commit -m "chore: sync plugin ${{ steps.bump.outputs.next }} (server ${{ steps.versions.outputs.server }}, skill ${{ steps.versions.outputs.skill }})"
+          git commit -m "chore: sync plugin $NEXT_VERSION (server $SERVER_VERSION, skill $SKILL_VERSION)"
           git push
