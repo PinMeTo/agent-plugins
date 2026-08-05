@@ -125,6 +125,13 @@ jobs:
 
       - name: Tool-surface parity against the vendored server
         working-directory: plugins/pinmeto-locations/skills/pinmeto-location-reports
+        # The parity script's own docstring says credentials are not required —
+        # true of the MCP protocol, false of this server, whose constructor exits
+        # on missing config. Do not remove.
+        env:
+          PINMETO_ACCOUNT_ID: ci
+          PINMETO_APP_ID: ci
+          PINMETO_APP_SECRET: ci
         run: |
           if [ -f scripts/check_mcp_parity.js ]; then
             # --server takes the server entry point; the script spawns it and runs
