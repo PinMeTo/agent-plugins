@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "pinmeto": {
+    "pinmeto-locations": {
       "command": "node",
       "args": ["${CLAUDE_PLUGIN_ROOT}/server/index.mjs"],
       "env": {
