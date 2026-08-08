@@ -2,12 +2,9 @@ name: Sync plugin artifacts
 
 on:
   repository_dispatch:
-    types: [server-released, skill-released]
+    types: [skill-released]
   workflow_dispatch:
     inputs:
-      server_version:
-        description: MCP server version to vendor (blank keeps current)
-        required: false
       skill_version:
         description: Skill version to vendor (blank keeps current)
         required: false
@@ -35,41 +32,21 @@ jobs:
           # Routed through env instead of interpolated directly into the script:
           # client_payload.* comes from a repository_dispatch call and must never
           # be substituted as raw text into a run: block (command injection).
-          SERVER_INPUT: ${{ github.event.client_payload.server_version || inputs.server_version }}
           SKILL_INPUT: ${{ github.event.client_payload.skill_version || inputs.skill_version }}
         run: |
-          CURRENT_SERVER=$(jq -r .server plugins/pinmeto-locations/components.json)
           CURRENT_SKILL=$(jq -r .skill plugins/pinmeto-locations/components.json)
-          SERVER="${SERVER_INPUT:-$CURRENT_SERVER}"
           SKILL="${SKILL_INPUT:-$CURRENT_SKILL}"
 
           # Fail closed before any downstream step gets a chance to re-embed this
           # value as script text. A hostile or malformed payload dies here, before
           # MARKETPLACE_SYNC_TOKEN or contents: write are ever in scope.
           SEMVER_RE='^[0-9]+\.[0-9]+\.[0-9]+$'
-          if ! [[ "$SERVER" =~ $SEMVER_RE ]]; then
-            echo "::error::server version '$SERVER' is not a valid semver (expected X.Y.Z)."
-            exit 1
-          fi
           if ! [[ "$SKILL" =~ $SEMVER_RE ]]; then
             echo "::error::skill version '$SKILL' is not a valid semver (expected X.Y.Z)."
             exit 1
           fi
 
-          echo "server=$SERVER" >> "$GITHUB_OUTPUT"
           echo "skill=$SKILL" >> "$GITHUB_OUTPUT"
-
-      - name: Vendor the server bundle
-        env:
-          GH_TOKEN: ${{ secrets.MARKETPLACE_SYNC_TOKEN }}
-          SERVER_VERSION: ${{ steps.versions.outputs.server }}
-        run: |
-          mkdir -p plugins/pinmeto-locations/server
-          gh release download "v$SERVER_VERSION" \
-            --repo PinMeTo/pinmeto-location-mcp \
-            --pattern index.mjs \
-            --output plugins/pinmeto-locations/server/index.mjs \
-            --clobber
 
       - name: Vendor the skill
         env:
@@ -99,57 +76,12 @@ jobs:
             exit 1
           fi
 
-      - name: Verify the bundled server starts and matches the skill's expectations
-        working-directory: plugins/pinmeto-locations
-        env:
-          PINMETO_ACCOUNT_ID: ci
-          PINMETO_APP_ID: ci
-          PINMETO_APP_SECRET: ci
-        run: |
-          printf '%s\n%s\n%s\n' \
-            '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"ci","version":"0"}}}' \
-            '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
-            '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
-            | node server/index.mjs 2>/dev/null > /tmp/tools.jsonl
-          node -e '
-            const fs = require("fs");
-            const lines = fs.readFileSync("/tmp/tools.jsonl", "utf-8").trim().split("\n").filter(Boolean);
-            const listed = lines.map(JSON.parse).find(m => m.id === 2);
-            if (!listed) throw new Error("Server produced no tools/list response");
-            const tools = listed.result.tools;
-            if (tools.length !== 12) throw new Error(`Expected 12 tools, got ${tools.length}`);
-            const untitled = tools.filter(t => !t.title).map(t => t.name);
-            if (untitled.length) throw new Error(`Tools missing a title: ${untitled.join(", ")}`);
-            console.log(`Server OK: ${tools.length} tools, all titled`);
-          '
-
-      - name: Tool-surface parity against the vendored server
-        working-directory: plugins/pinmeto-locations/skills/pinmeto-location-reports
-        # The parity script's own docstring says credentials are not required —
-        # true of the MCP protocol, false of this server, whose constructor exits
-        # on missing config. Do not remove.
-        env:
-          PINMETO_ACCOUNT_ID: ci
-          PINMETO_APP_ID: ci
-          PINMETO_APP_SECRET: ci
-        run: |
-          if [ -f scripts/check_mcp_parity.js ]; then
-            # --server takes the server entry point; the script spawns it and runs
-            # tools/list. No credentials needed. Exit 1 = drift, 2 = unreachable.
-            node scripts/check_mcp_parity.js --server ../../server/index.mjs
-          else
-            echo "::warning::check_mcp_parity.js not present in this skill release; parity not verified."
-          fi
-
       - name: Derive the plugin version
         id: bump
         env:
-          SERVER_VERSION: ${{ steps.versions.outputs.server }}
           SKILL_VERSION: ${{ steps.versions.outputs.skill }}
         run: |
-          NEXT=$(node scripts/bump-version.mjs \
-            --server "$SERVER_VERSION" \
-            --skill "$SKILL_VERSION")
+          NEXT=$(node scripts/bump-version.mjs --skill "$SKILL_VERSION")
           echo "next=$NEXT" >> "$GITHUB_OUTPUT"
 
       - name: Validate the plugin
@@ -158,7 +90,6 @@ jobs:
       - name: Commit
         env:
           NEXT_VERSION: ${{ steps.bump.outputs.next }}
-          SERVER_VERSION: ${{ steps.versions.outputs.server }}
           SKILL_VERSION: ${{ steps.versions.outputs.skill }}
         run: |
           if [ "$NEXT_VERSION" = "no change" ]; then
@@ -179,5 +110,5 @@ jobs:
           git config user.email "dev@pinmeto.com"
           git add -A
           git diff --staged --quiet && echo "No file changes." && exit 0
-          git commit -m "chore: sync plugin $NEXT_VERSION (server $SERVER_VERSION, skill $SKILL_VERSION)"
+          git commit -m "chore: sync plugin $NEXT_VERSION (skill $SKILL_VERSION)"
           git push
