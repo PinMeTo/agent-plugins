@@ -1,3 +1,8 @@
 {
-  "skill": "1.2.0"
+  "skills": {
+    "pinmeto-location-reports": {
+      "repo": "PinMeTo/pinmeto-location-reports-skill",
+      "version": "1.2.0"
+    }
+  }
 }

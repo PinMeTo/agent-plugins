@@ -5,6 +5,9 @@ on:
     types: [skill-released]
   workflow_dispatch:
     inputs:
+      skill_name:
+        description: Registered skill to vendor (blank = pinmeto-location-reports)
+        required: false
       skill_version:
         description: Skill version to vendor (blank keeps current)
         required: false
@@ -26,41 +29,61 @@ jobs:
         with:
           node-version: 20
 
-      - name: Resolve target versions
+      - name: Resolve target skill and version
         id: versions
         env:
           # Routed through env instead of interpolated directly into the script:
           # client_payload.* comes from a repository_dispatch call and must never
           # be substituted as raw text into a run: block (command injection).
+          SKILL_NAME_INPUT: ${{ github.event.client_payload.skill_name || inputs.skill_name }}
           SKILL_INPUT: ${{ github.event.client_payload.skill_version || inputs.skill_version }}
         run: |
-          CURRENT_SKILL=$(jq -r .skill plugins/pinmeto-locations/components.json)
-          SKILL="${SKILL_INPUT:-$CURRENT_SKILL}"
+          # Default keeps the existing reports-skill dispatch (which sends no name)
+          # working unchanged.
+          SKILL_NAME="${SKILL_NAME_INPUT:-pinmeto-location-reports}"
 
-          # Fail closed before any downstream step gets a chance to re-embed this
-          # value as script text. A hostile or malformed payload dies here, before
-          # MARKETPLACE_SYNC_TOKEN or contents: write are ever in scope.
+          # A slug check before the value ever reaches jq or a filesystem path.
+          if ! [[ "$SKILL_NAME" =~ ^[a-z0-9][a-z0-9-]*$ ]]; then
+            echo "::error::skill name '$SKILL_NAME' is not a valid slug."
+            exit 1
+          fi
+
+          # The registry (components.json) is the source of truth for where each
+          # skill is released from. An unregistered name fails closed here.
+          REPO=$(jq -r --arg n "$SKILL_NAME" '.skills[$n].repo // empty' plugins/pinmeto-locations/components.json)
+          if [ -z "$REPO" ]; then
+            echo "::error::skill '$SKILL_NAME' is not registered in components.json. Add it (name, repo, version) first."
+            exit 1
+          fi
+
+          CURRENT=$(jq -r --arg n "$SKILL_NAME" '.skills[$n].version' plugins/pinmeto-locations/components.json)
+          SKILL="${SKILL_INPUT:-$CURRENT}"
+
           SEMVER_RE='^[0-9]+\.[0-9]+\.[0-9]+$'
           if ! [[ "$SKILL" =~ $SEMVER_RE ]]; then
             echo "::error::skill version '$SKILL' is not a valid semver (expected X.Y.Z)."
             exit 1
           fi
 
+          echo "name=$SKILL_NAME" >> "$GITHUB_OUTPUT"
+          echo "repo=$REPO" >> "$GITHUB_OUTPUT"
           echo "skill=$SKILL" >> "$GITHUB_OUTPUT"
 
       - name: Vendor the skill
         env:
           GH_TOKEN: ${{ secrets.MARKETPLACE_SYNC_TOKEN }}
+          SKILL_NAME: ${{ steps.versions.outputs.name }}
+          SKILL_REPO: ${{ steps.versions.outputs.repo }}
           SKILL_VERSION: ${{ steps.versions.outputs.skill }}
         run: |
           gh release download "v$SKILL_VERSION" \
-            --repo PinMeTo/pinmeto-location-reports-skill \
+            --repo "$SKILL_REPO" \
             --pattern '*.skill' \
             --output /tmp/skill.zip \
             --clobber
-          rm -rf plugins/pinmeto-locations/skills/pinmeto-location-reports
-          mkdir -p plugins/pinmeto-locations/skills/pinmeto-location-reports
-          unzip -q /tmp/skill.zip -d plugins/pinmeto-locations/skills/pinmeto-location-reports
+          rm -rf "plugins/pinmeto-locations/skills/$SKILL_NAME"
+          mkdir -p "plugins/pinmeto-locations/skills/$SKILL_NAME"
+          unzip -q /tmp/skill.zip -d "plugins/pinmeto-locations/skills/$SKILL_NAME"
 
       - name: Reject oversized payloads
         run: |
@@ -79,9 +102,10 @@ jobs:
       - name: Derive the plugin version
         id: bump
         env:
+          SKILL_NAME: ${{ steps.versions.outputs.name }}
           SKILL_VERSION: ${{ steps.versions.outputs.skill }}
         run: |
-          NEXT=$(node scripts/bump-version.mjs --skill "$SKILL_VERSION")
+          NEXT=$(node scripts/bump-version.mjs --skill "$SKILL_NAME" --version "$SKILL_VERSION")
           echo "next=$NEXT" >> "$GITHUB_OUTPUT"
 
       - name: Validate the plugin
@@ -90,6 +114,7 @@ jobs:
       - name: Commit
         env:
           NEXT_VERSION: ${{ steps.bump.outputs.next }}
+          SKILL_NAME: ${{ steps.versions.outputs.name }}
           SKILL_VERSION: ${{ steps.versions.outputs.skill }}
         run: |
           if [ "$NEXT_VERSION" = "no change" ]; then
@@ -110,5 +135,5 @@ jobs:
           git config user.email "dev@pinmeto.com"
           git add -A
           git diff --staged --quiet && echo "No file changes." && exit 0
-          git commit -m "chore: sync plugin $NEXT_VERSION (skill $SKILL_VERSION)"
+          git commit -m "chore: sync plugin $NEXT_VERSION ($SKILL_NAME $SKILL_VERSION)"
           git push

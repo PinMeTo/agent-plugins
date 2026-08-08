@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 /**
- * Derives the plugin version from the vendored skill version alone.
+ * Derives the plugin version from the vendored skill versions.
  *
- * Rule:
- *   major - skill had a major release (the plugin no longer bundles a server,
- *           so the plugin major simply follows the skill major bump forward).
- *   minor - skill had a minor release.
- *   patch - skill had a patch release.
+ * components.json is the skill registry:
+ *   { "skills": { "<name>": { "repo": "owner/name", "version": "x.y.z" } } }
+ *
+ * On each sync one skill's vendored version moves; the plugin version follows the
+ * strongest bump across all changed skills (major > minor > patch). Adding or
+ * removing a skill from the registry is a manual edit with its own plugin bump —
+ * a skill that only appears in `after` does not drive a bump here.
  */
 
 import { readFileSync, writeFileSync } from 'fs';
@@ -24,40 +26,45 @@ const parse = v => {
 // testable without touching the filesystem.
 const compareVersions = (a, b) => a.major - b.major || a.minor - b.minor || a.patch - b.patch;
 
+const RANK = { patch: 1, minor: 2, major: 3 };
+
 /**
- * Derives the plugin version from the vendored skill version alone.
- *
- * Rule:
- *   major - skill had a major release (the plugin no longer bundles a server,
- *           so the plugin major simply follows the skill major bump forward).
- *   minor - skill had a minor release.
- *   patch - skill had a patch release.
- *
  * @param {string} currentPlugin  the plugin's current version
- * @param {{skill: string}} before  previously vendored skill version
- * @param {{skill: string}} after   newly vendored skill version
+ * @param {Record<string,string>} before  skill name -> previously vendored version
+ * @param {Record<string,string>} after   skill name -> newly vendored version
  * @param {boolean} [allowDowngrade]  skip the downgrade guard
- * @returns {string|null} the next plugin version, or null if the skill did not move
+ * @returns {string|null} the next plugin version, or null if no vendored skill moved
  */
 export function nextVersion(currentPlugin, before, after, allowDowngrade = false) {
   const plugin = parse(currentPlugin);
-  const [bk, ak] = [parse(before.skill), parse(after.skill)];
+  let severity = 0;
 
-  const isDowngrade = compareVersions(ak, bk) < 0;
+  for (const name of Object.keys(after)) {
+    // A skill present only in `after` was just added to the registry. Its arrival
+    // is a manual edit that carries its own plugin bump, so it does not drive one here.
+    if (!(name in before)) continue;
 
-  if (!allowDowngrade && isDowngrade) {
-    throw new Error(
-      `skill version ${after.skill} is older than the currently vendored ${before.skill}. Refusing to sync a downgrade. Pass --allow-downgrade to override.`
-    );
+    const b = parse(before[name]);
+    const a = parse(after[name]);
+    const isDowngrade = compareVersions(a, b) < 0;
+
+    if (!allowDowngrade && isDowngrade) {
+      throw new Error(
+        `skill ${name} version ${after[name]} is older than the currently vendored ${before[name]}. Refusing to sync a downgrade. Pass --allow-downgrade to override.`
+      );
+    }
+
+    // A downgrade always results in a patch bump.
+    if (isDowngrade) severity = Math.max(severity, RANK.patch);
+    else if (a.major !== b.major) severity = Math.max(severity, RANK.major);
+    else if (a.minor !== b.minor) severity = Math.max(severity, RANK.minor);
+    else if (a.patch !== b.patch) severity = Math.max(severity, RANK.patch);
   }
 
-  // A downgrade always results in a patch bump
-  if (isDowngrade) return `${plugin.major}.${plugin.minor}.${plugin.patch + 1}`;
-
-  if (ak.major !== bk.major) return `${plugin.major + 1}.0.0`;
-  if (ak.minor !== bk.minor) return `${plugin.major}.${plugin.minor + 1}.0`;
-  if (ak.patch !== bk.patch) return `${plugin.major}.${plugin.minor}.${plugin.patch + 1}`;
-  return null;
+  if (severity === 0) return null;
+  if (severity === RANK.major) return `${plugin.major + 1}.0.0`;
+  if (severity === RANK.minor) return `${plugin.major}.${plugin.minor + 1}.0`;
+  return `${plugin.major}.${plugin.minor}.${plugin.patch + 1}`;
 }
 
 /**
@@ -87,6 +94,10 @@ export function parseFlag(args, flag) {
   return value;
 }
 
+// Extracts a { name: version } map from the components registry.
+const versionsOf = components =>
+  Object.fromEntries(Object.entries(components.skills).map(([name, meta]) => [name, meta.version]));
+
 function main() {
   try {
     const rootDir = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -98,8 +109,26 @@ function main() {
     const args = process.argv.slice(2);
     const allowDowngrade = args.includes('--allow-downgrade');
 
-    const before = JSON.parse(readFileSync(componentsPath, 'utf-8'));
-    const after = { skill: parseFlag(args, '--skill') ?? before.skill };
+    const components = JSON.parse(readFileSync(componentsPath, 'utf-8'));
+    const before = versionsOf(components);
+
+    // Update exactly one registered skill's version. Both flags travel together;
+    // a lone flag is a caller mistake, not a silent no-op.
+    const skillName = parseFlag(args, '--skill');
+    const skillVersion = parseFlag(args, '--version');
+    const after = { ...before };
+    if (skillName !== null || skillVersion !== null) {
+      if (skillName === null || skillVersion === null) {
+        throw new Error('--skill <name> and --version <x.y.z> must be passed together');
+      }
+      if (!(skillName in components.skills)) {
+        throw new Error(
+          `unknown skill '${skillName}'. Add it to components.json (with its repo) before syncing.`
+        );
+      }
+      parse(skillVersion); // reject a malformed version before writing anything
+      after[skillName] = skillVersion;
+    }
 
     const pluginJson = JSON.parse(readFileSync(pluginPath, 'utf-8'));
     const next = nextVersion(pluginJson.version, before, after, allowDowngrade);
@@ -109,9 +138,11 @@ function main() {
       return;
     }
 
+    if (skillName !== null) components.skills[skillName].version = after[skillName];
+
     pluginJson.version = next;
     writeFileSync(pluginPath, JSON.stringify(pluginJson, null, 2) + '\n');
-    writeFileSync(componentsPath, JSON.stringify(after, null, 2) + '\n');
+    writeFileSync(componentsPath, JSON.stringify(components, null, 2) + '\n');
 
     const marketplace = JSON.parse(readFileSync(marketplacePath, 'utf-8'));
     const entry = marketplace.plugins.find(p => p.name === 'pinmeto-locations');
