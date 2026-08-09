@@ -3,6 +3,10 @@
     "pinmeto-location-reports": {
       "repo": "PinMeTo/pinmeto-location-reports-skill",
       "version": "1.2.0"
+    },
+    "pinmeto-web-presence": {
+      "repo": "PinMeTo/pinmeto-web-presence-skill",
+      "version": "0.10.1"
     }
   }
 }
