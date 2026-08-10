@@ -15,10 +15,20 @@
       "name": "pinmeto-locations",
       "source": "./plugins/pinmeto-locations",
       "description": "PinMeTo location reports skill for Google, Facebook and Apple (data connection installed separately as a Desktop Extension).",
-      "version": "4.1.0",
-      "author": { "name": "PinMeTo", "email": "dev@pinmeto.com" },
+      "version": "4.2.1",
+      "author": {
+        "name": "PinMeTo",
+        "email": "dev@pinmeto.com"
+      },
       "category": "integration",
-      "tags": ["location", "analytics", "reporting", "google", "facebook", "apple"],
+      "tags": [
+        "location",
+        "analytics",
+        "reporting",
+        "google",
+        "facebook",
+        "apple"
+      ],
       "license": "MIT",
       "homepage": "https://www.pinmeto.com/",
       "repository": "https://github.com/PinMeTo/claude-plugins.git"
