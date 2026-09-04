@@ -3,7 +3,7 @@
 Deterministic arithmetic over the `CheckResult` list. Given the same results, every host must
 compute the same numbers. Record the check results as a data structure and compute the
 pillar scores with a small script (Python/Node) when a shell is available — keep the script;
-it is the audit trail for the next run. Only fall back to a hand-worked scratch table when
+it is the audit trail for the next scan. Only fall back to a hand-worked scratch table when
 no runtime exists. Only checks listed in the rubric's `gradient_checks` may carry a measured
 ratio; everything else is exactly 1 / 0.5 / 0.
 
@@ -81,7 +81,7 @@ If **every sampled lookup came back `unobserved`** — no browser available, eve
 by a consent wall — do **not** compute a GEO score from warns. State the condition that way, not
 as "nothing was observed": an all-`not_found` run also has zero `observed` lookups, but those are
 real measurements, so GEO scores normally at or near zero and this branch must not fire. A single
-`not_found` anywhere in the sample is enough to make the run measured. A
+`not_found` anywhere in the sample is enough to make the scan measured. A
 pillar assembled entirely from 0.5s prints a mid-50s number for listings nobody looked at,
 under a PinMeTo logo. Instead:
 
@@ -90,7 +90,7 @@ under a PinMeTo logo. Instead:
   (SEO 0.43, AIO 0.357, Agent Readiness 0.214), and say in the hero sub-line and the
   methodology that the overall covers three pillars,
 - record `"geo": null` in the history block for that scan so the trend never plots it as a
-  drop, and flag the run as degraded in `notes`.
+  drop, and flag the scan as degraded in `notes`.
 
 Partial observation (some locations or platforms seen) scores normally — the unseen parts
 are `warn` at 0.5 and are listed under "could not be measured".
@@ -114,7 +114,7 @@ history block so the report renders from them rather than recomputing.
 Status bands (used for the hero tag and the pillar scorecards) map onto the grade
 thresholds: **Strong** ≥90 · **Healthy** ≥75 · **Needs work** ≥60 · **Critical** <60.
 
-## 4. Top fixes — ranked by points returned
+## 4. Points returned: the ranking key for Themes
 
 For each failing (not warn) check:
 
@@ -122,10 +122,10 @@ For each failing (not warn) check:
 
 …expressed in overall-score points. For GEO, a sub-group A check's effective weight is
 `(1 ÷ count of that platform's applicable_checks) × platform_weight × 0.55 × 0.30`, and a
-sub-group B/C field's is `field_share × subgroup_weight × 0.30`. Group related checks that one fix resolves (e.g. a
-template change fixing H1 + title + description) and sum their points — the report's "Fix
-these first" section shows the **three highest-point fixes**, each with its combined point
-value ("Worth ~4 points"), a plain-English headline, and the coding-agent brief.
+sub-group B/C field's is `field_share × subgroup_weight × 0.30`. Themes rank by summed
+points returned over their failing members; membership comes from the Theme mapping in
+`artifact-report.md`, never from per-scan judgment, and presentation (the Theme cards and the
+Theme brief) is specified in `artifact-report.md`.
 
 Tie-breakers: fleet-wide template fixes beat per-location manual edits; person-tasks (claim a
 listing) rank on points but are labeled as not-a-code-change.

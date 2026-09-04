@@ -59,8 +59,10 @@ from the responses; never quote whole HTML documents into the conversation.
 
 For every check, produce a `CheckResult` with concrete evidence rows (`{url, note}`). For
 failing checks, also write `fixSteps` (3–4 imperative steps) and `agentPrompt` (a
-self-contained brief a developer can paste into a coding agent — name the template/file kind
-of change, the acceptance condition, and ask for proof; see `artifact-report.md`).
+self-contained brief a developer can paste into a coding agent), plus `skillLinks` and
+`docLinks` when verified references exist. Every `agentPrompt` must use the exact
+`Goal` / `Issue` / `Fix` / `Skill` / `Docs` format and source rules in
+`artifact-report.md`.
 
 ## Per-page checks (evaluate on each sampled landing page)
 
@@ -144,7 +146,7 @@ pages of the **first three locations that declare a URL**, skipping any whose Pi
 none (that gap is already its own finding from Stage 1, so it must not also consume a PageSpeed
 slot). Fewer than three only when the sample itself is smaller, or when fewer than three sampled
 locations declare a URL at all — in which case the denominator is that smaller count and the
-evidence says so. List the chosen URLs in the check's evidence so the next run can reproduce the
+evidence says so. List the chosen URLs in the check's evidence so the next scan can reproduce the
 selection exactly. Picking them freshly each run would let LCP
 and mobile-friendly move without the site changing, which is exactly the drift the pinned
 sample exists to prevent. LCP:

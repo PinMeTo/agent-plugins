@@ -1,7 +1,8 @@
 # PinMeTo baseline — pull, judge, sample
 
 PinMeTo is the source of truth. Everything on the live web (landing pages, Google Maps,
-Apple Maps) is checked *against* this baseline.
+Apple Maps) is checked *against* this baseline. The **fleet** is the scope's open (not
+permanently closed) locations; an unscoped report's fleet is the whole account.
 
 ## Pull — token-lean by design
 
@@ -25,14 +26,14 @@ locations ever need complete records; everything else is counting and selecting.
    history block and fetch exactly those with `pinmeto_get_location`. Replace only
    locations that are gone or permanently closed (by the selection rule below) and note
    the substitution in the report.
-3. **First run, fleet ≤ ~50:** one or two pages with
+3. **First scan, fleet ≤ ~50:** one or two pages with
    `fields: ["storeId","name","locationDescriptor","address","location","contact","permanentlyClosed"]`,
    then select the sample by the deterministic rule below. Note: `network` is **not** in
    the `fields` enum — the platform deep links only come back on the full record from
    `pinmeto_get_location` (which takes no `fields` parameter), so budget one full record
    (~1,300 tokens) per sampled location; that cost is unavoidable and is why full records
    are fetched for the sample only. `response_format: "markdown"` does not shrink it.
-4. **First run, larger fleet:** do NOT paginate everything. Select by **even offsets**:
+4. **First scan, larger fleet:** do NOT paginate everything. Select by **even offsets**:
    for sample size s, fetch `offset = floor(i × totalCount / s)`, `limit: 1`, minimal
    `fields`, for i = 0…s−1 (the server's 5-minute cache keeps ordering stable within a
    scan). For multi-country brands the offsets run per `country` filter so every market is
@@ -44,7 +45,7 @@ locations ever need complete records; everything else is counting and selecting.
    computed as `floor(i × countryTotal / countrySlots)` over the slots that country was
    allocated — never over the global `s`, which would overshoot the budget. A 10-slot sample
    stays 10 locations however many countries the scope spans. The storeIds you pick get persisted in the report history — from
-   then on the sample is pinned (step 2), so cross-run ordering stability of the API never
+   then on the sample is pinned (step 2), so cross-scan ordering stability of the API never
    matters.
 5. **Full records for the sample only** (`pinmeto_get_location` per storeId), and don't
    echo raw location JSON into the conversation — extract the canonical record fields and
@@ -60,7 +61,7 @@ locations ever need complete records; everything else is counting and selecting.
 | 3–19 | `min(5, N)` | Fetch all (minimal fields), sample by sort rule |
 | 20–200 | 10 | Fetch 1–4 pages minimal fields, sample by sort rule |
 | 201–1,000 | 10 | Even-offset selection; recommend per-country scoped reports for coverage |
-| 1,000+ | 10 per report | **Scope required in practice**: one report per country/region (each with its own 5/10 sample and artifact). A single global report is allowed but must state how thin 10-of-N coverage is |
+| 1,000+ | 10 per report | **Scope required in practice**: one report per country/region, each with its own sample per this playbook and its own Site or artifact. A single global report is allowed but must state how thin 10-of-N coverage is |
 
 A 10-of-10,000 sample is statistically honest for template-level findings (most checks are
 template checks — one fix repairs every location) but blind to per-location listing drift.
@@ -98,13 +99,13 @@ These deep links are how Stage 4 opens the exact claimed listing instead of sear
 not connected/managed on that platform through PinMeTo, which both fails that check and
 usually foreshadows a parity gap on the map surface.
 
-## Deterministic sampling (must match across runs)
+## Deterministic sampling (must match across scans)
 
-- **Sample size:** `min(5, N)` locations when the brand has <20 — a 3- or 4-location fleet
+- **Sample size:** `min(5, N)` locations when the fleet has <20 — a 3- or 4-location fleet
   samples every location, since the even-spacing index would otherwise repeat; 10 when ≥20.
 - **Minimum:** 3 locations with usable records. Below that, stop and tell the user the fleet
   is too small/incomplete to score meaningfully; offer a qualitative check instead.
-- **Selection (first run):** small fleets — sort the fetched locations by
+- **Selection (first scan):** small fleets — sort the fetched locations by
   `"{street} {zip} {city}"` lowercase and take evenly spaced entries
   (index `floor(i × N / sample_size)`); large fleets — the even-offset fetch above *is* the
   selection. Either way the chosen storeIds are recorded in the report history, which pins
