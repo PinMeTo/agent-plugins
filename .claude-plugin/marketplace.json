@@ -15,7 +15,7 @@
       "name": "pinmeto-locations",
       "source": "./plugins/pinmeto-locations",
       "description": "PinMeTo location reports skill for Google, Facebook and Apple (data connection installed separately as a Desktop Extension).",
-      "version": "4.3.0",
+      "version": "4.4.0",
       "author": {
         "name": "PinMeTo",
         "email": "dev@pinmeto.com"
