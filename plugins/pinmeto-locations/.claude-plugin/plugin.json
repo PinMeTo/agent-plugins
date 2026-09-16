@@ -1,20 +1,26 @@
 {
   "name": "pinmeto-locations",
+  "displayName": "PinMeTo Locations and Web Presence",
   "version": "4.5.1",
-  "description": "PinMeTo location data and analytics reports for Google, Facebook and Apple.",
+  "description": "Board-ready PDF and PowerPoint reports from your PinMeTo location data, plus a web presence scan of how your locations show up in search, on Google, Apple and Bing Maps, and in AI answers.",
   "author": {
     "name": "PinMeTo",
     "url": "https://www.pinmeto.com/"
   },
   "homepage": "https://www.pinmeto.com/",
   "repository": "https://github.com/PinMeTo/claude-plugins",
-  "license": "MIT",
+  "license": "Proprietary",
   "keywords": [
+    "pinmeto",
     "location",
     "analytics",
     "reporting",
+    "seo",
+    "web-presence",
+    "ai-visibility",
     "google",
     "facebook",
-    "apple"
+    "apple",
+    "bing"
   ]
 }
