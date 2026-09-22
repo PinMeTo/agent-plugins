@@ -13,8 +13,9 @@
   "plugins": [
     {
       "name": "pinmeto-locations",
+      "displayName": "PinMeTo Locations and Web Presence",
       "source": "./plugins/pinmeto-locations",
-      "description": "PinMeTo location reports skill for Google, Facebook and Apple (data connection installed separately as a Desktop Extension).",
+      "description": "Board-ready PDF and PowerPoint reports from your PinMeTo location data, plus a web presence scan of how your locations show up in search, on Google, Apple and Bing Maps, and in AI answers. The data connection installs separately as a Desktop Extension.",
       "version": "4.5.1",
       "author": {
         "name": "PinMeTo",
@@ -22,14 +23,19 @@
       },
       "category": "integration",
       "tags": [
+        "pinmeto",
         "location",
         "analytics",
         "reporting",
+        "seo",
+        "web-presence",
+        "ai-visibility",
         "google",
         "facebook",
-        "apple"
+        "apple",
+        "bing"
       ],
-      "license": "MIT",
+      "license": "Proprietary",
       "homepage": "https://www.pinmeto.com/",
       "repository": "https://github.com/PinMeTo/claude-plugins.git"
     }
