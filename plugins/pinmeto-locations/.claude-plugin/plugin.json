@@ -1,14 +1,14 @@
 {
   "name": "pinmeto-locations",
-  "displayName": "PinMeTo Locations and Web Presence",
-  "version": "4.5.1",
-  "description": "Board-ready PDF and PowerPoint reports from your PinMeTo location data, plus a web presence scan of how your locations show up in search, on Google, Apple and Bing Maps, and in AI answers.",
+  "displayName": "PinMeTo Location Reports & Visibility",
+  "version": "4.5.2",
+  "description": "Create location performance reports and audit your visibility across search, maps, and AI answers using your PinMeTo data.",
   "author": {
     "name": "PinMeTo",
     "url": "https://www.pinmeto.com/"
   },
   "homepage": "https://www.pinmeto.com/",
-  "repository": "https://github.com/PinMeTo/claude-plugins",
+  "repository": "https://github.com/PinMeTo/agent-plugins",
   "license": "Proprietary",
   "keywords": [
     "pinmeto",
