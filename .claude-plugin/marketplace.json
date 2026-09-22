@@ -6,17 +6,17 @@
     "url": "https://www.pinmeto.com/"
   },
   "metadata": {
-    "description": "Official PinMeTo plugins for Claude",
+    "description": "PinMeTo Plugins: official plugins for AI assistants",
     "version": "1.0.0",
     "pluginRoot": "./plugins"
   },
   "plugins": [
     {
       "name": "pinmeto-locations",
-      "displayName": "PinMeTo Locations and Web Presence",
+      "displayName": "PinMeTo Location Reports & Visibility",
       "source": "./plugins/pinmeto-locations",
-      "description": "Board-ready PDF and PowerPoint reports from your PinMeTo location data, plus a web presence scan of how your locations show up in search, on Google, Apple and Bing Maps, and in AI answers. The data connection installs separately as a Desktop Extension.",
-      "version": "4.5.1",
+      "description": "Create location performance reports and audit your visibility across search, maps, and AI answers using your PinMeTo data. The PinMeTo MCP data connection installs separately.",
+      "version": "4.5.2",
       "author": {
         "name": "PinMeTo",
         "email": "dev@pinmeto.com"
@@ -37,7 +37,7 @@
       ],
       "license": "Proprietary",
       "homepage": "https://www.pinmeto.com/",
-      "repository": "https://github.com/PinMeTo/claude-plugins.git"
+      "repository": "https://github.com/PinMeTo/agent-plugins.git"
     }
   ]
 }

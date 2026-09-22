@@ -1,10 +1,10 @@
-# PinMeTo plugin for Claude
+# PinMeTo Location Reports & Visibility
 
-Your customers are everywhere. Are you?
+Create location performance reports and audit your visibility across search, maps, and AI
+answers using your PinMeTo data.
 
-This plugin brings your PinMeTo location data into Claude and turns it into two things
-marketing teams ask for again and again: performance reports for the board, and a scan of how
-easily your locations are found in search, on maps, and in AI answers.
+Use these skills in Claude, ChatGPT, or Codex with the PinMeTo Location MCP data connection.
+Installation and available tools depend on the host; see the instructions below.
 
 ## What you can do
 
@@ -27,27 +27,53 @@ problems come down to the same fact being different in two places.
 
 - A PinMeTo account with API access. Your Account ID, App ID, and App Secret are under
   [Account Settings > API](https://places.pinmeto.com/account-settings/pinmeto/api/v3).
-- Claude Desktop. Reports also work in Claude Code.
-- For the Web Presence scan, a browser in Claude (the built-in browser or Claude in Chrome), so
-  the map listings can be read as a customer sees them.
+- A host that supports skills and the PinMeTo MCP connection, such as Claude Desktop,
+  Claude Code, or Codex in the ChatGPT desktop app.
+- For the Web Presence scan, a browser tool that can read map listings as a customer sees
+  them. Without one, the scan runs the website checks and marks the map checks as not measured.
 
 ## Install
 
 Two steps. The first installs the data connection, the second adds the skills.
+
+### Claude Desktop
 
 1. **Install the data connection.** Download the latest `.mcpb` file from the
    [PinMeTo Location MCP releases](https://github.com/PinMeTo/pinmeto-location-mcp/releases).
    Double-click it with Claude Desktop open (or drag it into Settings > Extensions) and enter
    your three credentials when asked.
 2. **Add the plugin.** In Claude Desktop, open Customize > Plugins, click the plus sign and
-   choose Add marketplace, enter `PinMeTo/claude-plugins`, then install
-   **PinMeTo Locations and Web Presence**.
-
-To check that everything works, ask Claude: "Show me one of my locations." If it answers with a
-location, you are set. If not, ask Claude to "run PinMeTo setup" and it will walk you through
-the fixes.
+   choose Add marketplace, enter `PinMeTo/agent-plugins`, then install
+   **PinMeTo Location Reports & Visibility** from the PinMeTo marketplace.
 
 While this repository is private, step 2 requires the Claude GitHub App to have access to it.
+
+### Claude Code
+
+1. Configure the server using the [PinMeTo Location MCP installation instructions](https://github.com/PinMeTo/pinmeto-location-mcp#installation).
+2. Add the marketplace and install the plugin:
+
+   ```text
+   /plugin marketplace add PinMeTo/agent-plugins
+   /plugin install pinmeto-locations@pinmeto
+   ```
+
+### ChatGPT and Codex
+
+1. Configure the data connection using the [ChatGPT desktop app instructions](https://github.com/PinMeTo/pinmeto-location-mcp#chatgpt-desktop-app).
+   This local connection runs in Codex in the desktop app. ChatGPT on the web requires a remote
+   MCP connection; it cannot use this local server configuration.
+2. Install the skills using the host-specific instructions in the
+   [Location Reports](https://github.com/PinMeTo/pinmeto-location-reports-skill) and
+   [Web Presence](https://github.com/PinMeTo/pinmeto-web-presence-skill) repositories.
+
+The skills use a shared format. The data connection and browser tools must also be available
+in the host where you run them.
+
+### Check the connection
+
+Ask your assistant: "Show me one of my locations." If it returns a location, the data connection
+works. If you installed the bundled setup skill, ask it to "run PinMeTo setup" for help.
 
 ## Try asking
 
@@ -67,12 +93,12 @@ visibility can improve; it is not a ranking PinMeTo guarantees.
 
 Everything here is read-only. The plugin never changes your PinMeTo data or your listings.
 
-The same skills run in ChatGPT and Codex, which use the same skill format. This repository is
-the Claude packaging only. The data connection for the ChatGPT desktop app is described in the
-[PinMeTo Location MCP README](https://github.com/PinMeTo/pinmeto-location-mcp#installation), and
-each skill's own repository describes how to install it there.
-
 ## For developers
+
+This repository is the **PinMeTo Plugins** marketplace. The plugin identifier stays
+`pinmeto-locations`, and the marketplace identifier stays `pinmeto`, so existing command
+names remain stable. The `.claude-plugin/` directories contain the Claude-compatible manifests;
+the skills themselves use the shared skill format.
 
 The plugin ships three skills under `plugins/pinmeto-locations/skills/`:
 
