@@ -16,7 +16,7 @@
       "displayName": "PinMeTo Location Reports & Visibility",
       "source": "./plugins/pinmeto-locations",
       "description": "Create location performance reports and audit your visibility across search, maps, and AI answers using your PinMeTo data. The PinMeTo MCP data connection installs separately.",
-      "version": "4.5.2",
+      "version": "4.5.3",
       "author": {
         "name": "PinMeTo",
         "email": "dev@pinmeto.com"

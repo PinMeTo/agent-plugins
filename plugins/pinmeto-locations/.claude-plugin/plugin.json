@@ -1,7 +1,7 @@
 {
   "name": "pinmeto-locations",
   "displayName": "PinMeTo Location Reports & Visibility",
-  "version": "4.5.2",
+  "version": "4.5.3",
   "description": "Create location performance reports and audit your visibility across search, maps, and AI answers using your PinMeTo data.",
   "author": {
     "name": "PinMeTo",
