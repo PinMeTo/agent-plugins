@@ -46,8 +46,6 @@ Two steps. The first installs the data connection, the second adds the skills.
    choose Add marketplace, enter `PinMeTo/agent-plugins`, then install
    **PinMeTo Location Reports & Visibility** from the PinMeTo marketplace.
 
-While this repository is private, step 2 requires the Claude GitHub App to have access to it.
-
 ### Claude Code
 
 1. Configure the server using the [PinMeTo Location MCP installation instructions](https://github.com/PinMeTo/pinmeto-location-mcp#installation).
