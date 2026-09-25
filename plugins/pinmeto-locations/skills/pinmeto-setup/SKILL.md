@@ -1,6 +1,6 @@
 ---
 name: pinmeto-setup
-description: Use this skill immediately after installing or enabling the PinMeTo Location Reports & Visibility plugin, or when the user reports that PinMeTo tools are failing, returning authentication errors, or behaving inconsistently. Walks through installing the host's MCP data connection, entering credentials, verifying the connection, and avoiding duplicate servers.
+description: Use this skill immediately after installing or enabling the PinMeTo Location Reports & Web Presence plugin, or when the user reports that PinMeTo tools are failing, returning authentication errors, or behaving inconsistently. Walks through installing the host's MCP data connection, entering credentials, verifying the connection, and avoiding duplicate servers.
 ---
 
 # PinMeTo plugin setup
