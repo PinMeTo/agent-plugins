@@ -1,6 +1,6 @@
-# PinMeTo Location Reports & Visibility
+# PinMeTo Location Reports & Web Presence
 
-Create location performance reports and audit your visibility across search, maps, and AI
+Create location performance reports and check how your locations show up across search, maps, and AI
 answers using your PinMeTo data.
 
 Use these skills in Claude, ChatGPT, or Codex with the PinMeTo Location MCP data connection.
@@ -44,7 +44,7 @@ Two steps. The first installs the data connection, the second adds the skills.
    your three credentials when asked.
 2. **Add the plugin.** In Claude Desktop, open Customize > Plugins, click the plus sign and
    choose Add marketplace, enter `PinMeTo/agent-plugins`, then install
-   **PinMeTo Location Reports & Visibility** from the PinMeTo marketplace.
+   **PinMeTo Location Reports & Web Presence** from the PinMeTo marketplace.
 
 ### Claude Code
 
@@ -86,8 +86,8 @@ works. If you installed the bundled setup skill, ask it to "run PinMeTo setup" f
 ## Good to know
 
 Reports and scans are generated with AI from your PinMeTo data and public signals. They can
-make mistakes, so verify a finding before you act on it. The Web Presence score points at where
-visibility can improve; it is not a ranking PinMeTo guarantees.
+make mistakes, so verify a finding before you act on it. The Web Presence score points at where your
+presence can improve; it is not a ranking PinMeTo guarantees.
 
 Everything here is read-only. The plugin never changes your PinMeTo data or your listings.
 

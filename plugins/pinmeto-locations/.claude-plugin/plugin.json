@@ -1,8 +1,8 @@
 {
   "name": "pinmeto-locations",
-  "displayName": "PinMeTo Location Reports & Visibility",
+  "displayName": "PinMeTo Location Reports & Web Presence",
   "version": "4.5.3",
-  "description": "Create location performance reports and audit your visibility across search, maps, and AI answers using your PinMeTo data.",
+  "description": "Create location performance reports and check how your locations show up across search, maps, and AI answers using your PinMeTo data.",
   "author": {
     "name": "PinMeTo",
     "url": "https://www.pinmeto.com/"
@@ -17,7 +17,6 @@
     "reporting",
     "seo",
     "web-presence",
-    "ai-visibility",
     "google",
     "facebook",
     "apple",
